@@ -1,0 +1,42 @@
+name: Deploy static content to Pages
+
+# Jalan tiap push ke main, atau dipicu manual dari tab Actions (workflow_dispatch).
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+# Izin minimum yang dibutuhkan actions/deploy-pages buat publish ke GitHub Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Cegah dua deployment jalan bersamaan rebutan slot Pages yang sama.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # Situs statis murni (HTML polos), jadi tanpa build step apa pun —
+      # upload seluruh isi repo apa adanya.
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
